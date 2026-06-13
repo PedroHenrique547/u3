@@ -1,6 +1,14 @@
 class Cidade {
 
-public:
+private:
+    int id, visitas;
     string nome;
-    int visitas;
+    
+public:
+    Cidade(int id, string nome);
+
+    int getId() const;
+    string getNome() const;
+    int getVisitas() const;
+    void incrementarVisitas();
 };
