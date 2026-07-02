@@ -34,8 +34,7 @@ Controlador::~Controlador() {
         }
     }
 }
-
-
+// Funções de cadastro interativo com o usuário
 void Controlador::cadastrarCidade() {
     string nome;
     cout << "Nome da cidade: \n";
@@ -62,10 +61,21 @@ void Controlador::cadastrarTrajeto() {
     getline(cin, destino);
     cout << "o tipo de trajeto é? (0-Terrestre | 1-Aquático): \n"; 
     cin >> tipo;
-    cout << "Distância (km): \n"; cin >> dist;
 
     Cidade* orig = getCidade(origem);
     Cidade* dest = getCidade(destino);
+
+    for (Trajeto* trajeto : trajetos) {
+        if (trajeto->getTipo() == tipo &&
+            ((trajeto->getOrigem() == orig && trajeto->getDestino() == dest) ||
+            (trajeto->getOrigem() == dest && trajeto->getDestino() == orig))) {
+
+            cout << "Esse trajeto já existe.\n";
+            return;
+        }
+    }
+    
+    cout << "Distância (km): \n"; cin >> dist;
 
     if (orig == nullptr || dest == nullptr) {
         cout << "Erro: Cidade não encontrada!\n";
@@ -80,8 +90,8 @@ void Controlador::cadastrarTrajeto() {
         return;
     }
 
-    Tipo t = (tipo == 1) ? Tipo::A : Tipo::T;
-    trajetos.emplace_back(new Trajeto(orig, dest, t, dist));
+    Tipo _t = (tipo == 0) ? Tipo::T : Tipo::A;
+    trajetos.emplace_back(new Trajeto(orig, dest, _t, dist));
     cout << "Trajeto cadastrado!\n";
 }
 
@@ -137,6 +147,44 @@ void Controlador::cadastrarPassageiro() {
 
     cout << "Passageiro cadastrado!\n";
 }
+// Funções de cadastro com parâmetros voltados para a leitura e carregamento de arquivos do sistema
+void Controlador::cadastrarCidade(const string& nome) {
+    if (getCidade(nome) != nullptr) {
+        return;
+    }
+    cidades.emplace_back(new Cidade(nome));
+}
+
+void Controlador::cadastrarPassageiro(const string& nome, const string& local) {
+    Cidade* localAtual = getCidade(local);
+    if (!localAtual){
+        return;
+    }
+    passageiros.emplace_back(new Passageiro(nome, localAtual));
+}
+
+void Controlador::cadastrarTransporte(const string& nome, Tipo tipo, int capacidade, int velocidade, const string& local) {
+    Cidade* localAtual = getCidade(local);
+    if (!localAtual || capacidade <= 0 || velocidade <= 0){
+        return;
+    }
+    transportes.emplace_back(new Transporte(nome, tipo, capacidade, velocidade, localAtual));
+}
+
+void Controlador::cadastrarTrajeto(const string& origem, const string& destino, Tipo t, double distancia) {
+    Cidade* orig = getCidade(origem);
+    Cidade* dest = getCidade(destino);
+    if (!orig || !dest || distancia <= 0){
+        return;
+    }
+    for (Trajeto* t : trajetos) {
+        if (t->getOrigem() == orig && t->getDestino() == dest){
+            return;
+        } 
+    }
+
+    trajetos.emplace_back(new Trajeto(orig, dest, t, distancia));
+}
 
 void Controlador::iniciarViagemMenu() {
     string origem, destino, transporte;
@@ -170,6 +218,7 @@ void Controlador::iniciarViagem(string nome_transp, string origem, string destin
     Cidade* o = getCidade(origem);
     Cidade* d = getCidade(destino);
 
+    cout << nome_transp << " | " << origem << " | " << destino << endl;
     // Checagem inicial de validação dos parâmetros, como destino, transporte e cidade departida--
     if (!transp) { 
         cout << "Erro: Transporte não existe, nome incorreto ou encontrado.\n"; 
@@ -218,7 +267,7 @@ void Controlador::iniciarViagem(string nome_transp, string origem, string destin
         for (int i = 0; i + 1 < rota.size(); i++) {
             Cidade* a = rota[i];
             Cidade* b = rota[i + 1];
-            int dist = distanciaOtim(a, b, transp->getTipo(), otimizado);
+            int dist = distanciaOtim(a, b, transp->getTipo());
             Viagem* v = new Viagem(transp, l, a, b, dist);
             if (!inicial) {
                 inicial = v;
@@ -253,7 +302,7 @@ void Controlador::avancar(){
     cin >> horas;
     avançarHoras(horas);
 }
-// Função pra avançar 1 hora em todas viagens em andamento
+// Função pra avançar X hora em todas viagens em andamento
 void Controlador::avançarHoras(int horas) {
     if (horas <= 0) {
         return;
@@ -453,9 +502,7 @@ vector<Cidade*> Controlador::calcularMelhorTrajeto(Cidade* origem, Cidade* desti
             if (v == u){
                 continue;
             }
-            int retorno;
-            retorno = distanciaOtim(cidades[u], cidades[v], tipo, retorno);
-
+            int retorno = distanciaOtim(cidades[u], cidades[v], tipo);
             if (retorno < 0){
                 continue;
             }
@@ -478,26 +525,126 @@ vector<Cidade*> Controlador::calcularMelhorTrajeto(Cidade* origem, Cidade* desti
     return result;
 }
 
-int Controlador::distanciaOtim(Cidade* a, Cidade* b, Tipo tipo, int& ref) const {
+int Controlador::distanciaOtim(Cidade* a, Cidade* b, Tipo tipo) const {
+    int menor = -1;   // -1 significa "não encontrado"
     for (Trajeto* t : trajetos) {
         if (t->getTipo() != tipo) {
             continue;
         }
         bool check = (t->getOrigem() == a && t->getDestino() == b) || (t->getOrigem() == b && t->getDestino() == a);
         if (check) {
-            if (ref == -1 || t->getDistancia() < ref)
-                ref = t->getDistancia();
+            int d = t->getDistancia();
+            if (menor == -1 || d < menor) {
+                menor = d;
+            }
         }
     }
-    return ref;
+    return menor;
 }
 
 //----- CARREGAR DADOS ---
 
+// Função para carregar os dados de arquivos separados, no qual se utilizo nos crostrutores das classes, sendo eles: cidades.txt, trajetos.txt, transportes.txt e passageiros.txt
 void Controlador::carregarDados() {
-    // Implementação para carregar dados de arquivos futuramente
-}
 
+    // Função lambda para carregar dados de um arquivo específico
+    auto load = [this](const string& nomeArq, auto pLinha) {
+        ifstream arq(nomeArq);
+        if (!arq.is_open()) {
+            cout << "Erro: Não foi possível abrir o arquivo " << nomeArq << endl;
+            return;
+        }
+        string l;
+        while (getline(arq, l)) {
+            if (l.empty() || l[0] == '#') {
+                continue;
+            }
+            stringstream ss(l);
+            pLinha(ss);
+        }
+    };
+    load("cidades.txt", [&](stringstream& ss) {
+        string nome, visitas;
+        getline(ss, nome, '-');
+        getline(ss, visitas, '-');
+
+        if (!nome.empty()) {
+            cadastrarCidade(nome);
+            if (Cidade* c = getCidade(nome); c && !visitas.empty()) {
+                try {
+                    c->setQttVisitas(stoi(visitas));
+                } catch (...) {
+                    c->setQttVisitas(0);
+                }
+            }
+        }
+    });
+    load("passageiros.txt", [&](stringstream& ss) {
+        string nome, local;
+        getline(ss, nome, '-');
+        getline(ss, local, '-');
+
+        if (!nome.empty() && local != "emAndamento") {
+            cadastrarPassageiro(nome, local);
+        }
+    });
+    load("transportes.txt", [&](stringstream& ss) {
+        string nome, tipoStr, cap, vel, local;
+        getline(ss, nome, '-');
+        getline(ss, tipoStr, '-');
+        getline(ss, cap, '-');
+        getline(ss, vel, '-');
+        getline(ss, local, '-');
+
+        Tipo tipo = (tipoStr == "T") ? Tipo::T : Tipo::A;
+        if (!nome.empty() && local != "emAndamento" && !tipoStr.empty()) {
+            try {
+                cadastrarTransporte(nome, tipo, stoi(cap), stoi(vel), local);
+            } catch (...) {
+                // ignora linha com erro de conversão
+            }
+        }
+    });
+    load("trajetos.txt", [&](stringstream& ss) {
+        string o, d, tipoStr, dis;
+        getline(ss, o, '-');
+        getline(ss, d, '-');
+        getline(ss, tipoStr, '-');
+        getline(ss, dis, '-');
+
+        Tipo tipo = (tipoStr == "T") ? Tipo::T : Tipo::A;
+        if (!o.empty() && !d.empty() && !tipoStr.empty() && !dis.empty()) {
+            try {
+                cadastrarTrajeto(o, d, tipo, stoi(dis));
+            } catch (...) {}
+        }
+    });
+}
+// Função para salvar os dados em arquivos separadamente, sendo eles: cidades.txt, trajetos.txt, transportes.txt e passageiros.txt
 void Controlador::salvarDados() {
-    // Implementação para salvar dados em arquivos futuramente
+    
+    ofstream arq_cidades("cidades.txt");
+    for (Cidade* c : cidades)
+        arq_cidades << c->getNome() << "-" << c->getQttVisitas() << "\n";
+    arq_cidades.close();
+    
+    ofstream arq_pas("passageiros.txt");
+    for (Passageiro* p : passageiros) {
+        string local = p->getLocalAtual() ? p->getLocalAtual()->getNome() : "emAndamento";
+        arq_pas << p->getNome() << "-" << local << "\n";
+    }
+    arq_pas.close();
+    
+    ofstream arq_transportes("transportes.txt");
+    for (Transporte* t : transportes) {
+        string local = t->getLocalAtual() ? t->getLocalAtual()->getNome() : "emAndamento";
+        arq_transportes << t->getNome() << "-" << t->getTipo() << "-" << t->getCapacidade() << "-" << t->getVelocidade() << "-" << local << "\n";
+    }
+    arq_transportes.close();
+
+    ofstream arq_traj("trajetos.txt");
+    for (Trajeto* t : trajetos){
+        arq_traj << t->getOrigem()->getNome() << "-" << t->getDestino()->getNome() << "-" << t->getTipo() << "-" << t->getDistancia() << "\n";
+    }
+    arq_traj.close(); 
 }

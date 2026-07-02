@@ -22,15 +22,21 @@ private:
     vector<Viagem*> viagens; 
     
     vector<Cidade*> calcularMelhorTrajeto(Cidade* origem, Cidade* destino, enum Tipo tipo) const;
-    int distanciaOtim(Cidade* a, Cidade* b, enum Tipo tipo, int& ref) const ;
+    int distanciaOtim(Cidade* a, Cidade* b, enum Tipo tipo) const ;
 
 public:
     ~Controlador();
 
+    // Métodos de cadastro interativos com o usuario
     void cadastrarCidade();
     void cadastrarTrajeto();
     void cadastrarTransporte();
     void cadastrarPassageiro();
+    // Métodos de cadastro com parâmetros voltados para a leitura e carregamento de arquivos do sistema
+    void cadastrarCidade(const string& nome);
+    void cadastrarTrajeto(const string& origem, const string& destino, Tipo tipo, double distancia);
+    void cadastrarTransporte(const string& nome, Tipo tipo, int capacidade, int velocidade, const string& local);
+    void cadastrarPassageiro(const string& nome, const string& local);
 
     void iniciarViagemMenu();
     void iniciarViagem(string nome_transporte, string origem, string destino, const vector<string>& nome_passageiros);
