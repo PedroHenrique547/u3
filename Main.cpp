@@ -1,7 +1,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include "controlador.hpp" 
+#include "Controlador.h" 
 
 using namespace std;
 
@@ -64,10 +64,8 @@ void Main::menuPrincipal() {
                 break;
             case 0:
                 cout << "Encerrando o sistema...\n";
-                if (controlador.salvarDados())
-                    return;
-                else
-                    cout << "Erro ao salvar dados!\n";
+                controlador.salvarDados();
+                return;
             default:
                 cout << "Opcao invalida! Tente novamente.\n";
         }
@@ -81,9 +79,8 @@ void Main::menuGestaoViagens() {
         cout << "1. Iniciar Nova Viagem\n";
         cout << "2. Escolher o transporte e passageiros\n";
         cout << "3. Registrar a partida de transporte\n";
-        cout << "4. Avançar horas e atualizar estado do sistema\n";
-        cout << "5. Registrar a chegada do transporte na cidade de destino\n";
-        cout << "6. Calcular o melhor trajeto entre cidades\n";
+        cout << "4. Avançar X horas e atualizar estado do sistema\n";
+        cout << "5. Calcular o melhor trajeto entre cidades\n";
         cout << "0. Voltar ao Menu Principal\n";
         cout << "Escolha: ";
         cin >> opcao;
@@ -93,19 +90,16 @@ void Main::menuGestaoViagens() {
                 controlador.iniciarViagemMenu();
                 break;
             case 2:
-               // controlador.atualizarViagens();
+               controlador.listarViagens();
                 break;
             case 3:
-              //  controlador.finalizarViagem();
+                //controlador.finalizarViagem();
                 break;
             case 4:
-              //  controlador.avancarHoras();
+                controlador.avancar();
                 break;
             case 5:
-              //  controlador.registrarChegada();
-                break;
-            case 6:
-            //    controlador.calcularMelhorTrajeto();
+                controlador.melhorTrajeto();
                 break;
             case 0:
                 return;
@@ -139,7 +133,7 @@ void Main::menuListagens() {
                 controlador.listarViagens();
                 break;
             case 4:
-                controlador.listarCidadesMaisVisitadas();
+                controlador.listarMaisVisitadas();
                 break;
             case 0:
                 return;
