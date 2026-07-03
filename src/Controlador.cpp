@@ -546,6 +546,7 @@ int Controlador::distanciaOtim(Cidade* a, Cidade* b, Tipo tipo) const {
 
 // Função para carregar os dados de arquivos separados, no qual se utilizo nos crostrutores das classes, sendo eles: cidades.txt, trajetos.txt, transportes.txt e passageiros.txt
 void Controlador::carregarDados() {
+    string pasta = "data"; // Defina o caminho correto para a pasta de dados
 
     // Função lambda para carregar dados de um arquivo específico
     auto load = [this](const string& nomeArq, auto pLinha) {
@@ -563,7 +564,7 @@ void Controlador::carregarDados() {
             pLinha(ss);
         }
     };
-    load("cidades.txt", [&](stringstream& ss) {
+    load(pasta + "/cidades.txt", [&](stringstream& ss) {
         string nome, visitas;
         getline(ss, nome, '-');
         getline(ss, visitas, '-');
@@ -579,7 +580,7 @@ void Controlador::carregarDados() {
             }
         }
     });
-    load("passageiros.txt", [&](stringstream& ss) {
+    load(pasta + "/passageiros.txt", [&](stringstream& ss) {
         string nome, local;
         getline(ss, nome, '-');
         getline(ss, local, '-');
@@ -588,7 +589,7 @@ void Controlador::carregarDados() {
             cadastrarPassageiro(nome, local);
         }
     });
-    load("transportes.txt", [&](stringstream& ss) {
+    load(pasta + "/transportes.txt", [&](stringstream& ss) {
         string nome, tipoStr, cap, vel, local;
         getline(ss, nome, '-');
         getline(ss, tipoStr, '-');
@@ -605,7 +606,7 @@ void Controlador::carregarDados() {
             }
         }
     });
-    load("trajetos.txt", [&](stringstream& ss) {
+    load(pasta + "/trajetos.txt", [&](stringstream& ss) {
         string o, d, tipoStr, dis;
         getline(ss, o, '-');
         getline(ss, d, '-');
@@ -622,27 +623,28 @@ void Controlador::carregarDados() {
 }
 // Função para salvar os dados em arquivos separadamente, sendo eles: cidades.txt, trajetos.txt, transportes.txt e passageiros.txt
 void Controlador::salvarDados() {
+    string pasta = "data";
     
-    ofstream arq_cidades("cidades.txt");
+    ofstream arq_cidades(pasta + "/cidades.txt");
     for (Cidade* c : cidades)
         arq_cidades << c->getNome() << "-" << c->getQttVisitas() << "\n";
     arq_cidades.close();
     
-    ofstream arq_pas("passageiros.txt");
+    ofstream arq_pas(pasta + "/passageiros.txt");
     for (Passageiro* p : passageiros) {
         string local = p->getLocalAtual() ? p->getLocalAtual()->getNome() : "emAndamento";
         arq_pas << p->getNome() << "-" << local << "\n";
     }
     arq_pas.close();
     
-    ofstream arq_transportes("transportes.txt");
+    ofstream arq_transportes(pasta + "/transportes.txt");
     for (Transporte* t : transportes) {
         string local = t->getLocalAtual() ? t->getLocalAtual()->getNome() : "emAndamento";
         arq_transportes << t->getNome() << "-" << t->getTipo() << "-" << t->getCapacidade() << "-" << t->getVelocidade() << "-" << local << "\n";
     }
     arq_transportes.close();
 
-    ofstream arq_traj("trajetos.txt");
+    ofstream arq_traj(pasta + "/trajetos.txt");
     for (Trajeto* t : trajetos){
         arq_traj << t->getOrigem()->getNome() << "-" << t->getDestino()->getNome() << "-" << t->getTipo() << "-" << t->getDistancia() << "\n";
     }
